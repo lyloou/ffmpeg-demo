@@ -516,8 +516,10 @@ public class MediaUtil {
             throw new RuntimeException("截取时间不合法：" + startTime.toString() + "，因为截取时间大于视频的时长");
         }
         try {
-            if (!outputFile.exists()) {
-                outputFile.createNewFile();
+            System.out.println(outputFile.getAbsoluteFile());
+            if (outputFile.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                outputFile.delete();
             }
             List<String> commond = new ArrayList<String>();
             commond.add("-y");
@@ -531,8 +533,8 @@ public class MediaUtil {
             commond.add("copy");
             commond.add(outputFile.getAbsolutePath());
             executeCommand(commond);
-        } catch (IOException e) {
-            log.error("--- 视频截取过程出错 ---");
+        } catch (Exception e) {
+            log.error("--- 视频截取过程出错 ---", e);
         }
     }
 
@@ -560,20 +562,9 @@ public class MediaUtil {
     }
 
     private static void concatWithDemuxer(List<String> videoPathList, boolean isDeleteOriginFile) throws IOException {
-        if (videoPathList == null || videoPathList.isEmpty()) {
-            return;
-        }
-        String firstVideoPath = videoPathList.get(0);
-        int indexSuffix = firstVideoPath.lastIndexOf(".");
-        if (indexSuffix == -1) {
-            log.error("无效的视频格式，路径为：{}", firstVideoPath);
-            return;
-        }
+        String mergedFilePath = getConcatFilePathname(videoPathList);
+        if (mergedFilePath == null) return;
 
-        String fileName = firstVideoPath.substring(0, indexSuffix);
-        String suffix = firstVideoPath.substring(indexSuffix);
-
-        String mergedFilePath = fileName + "_TMP" + suffix;
         File mergedFile = new File(mergedFilePath);
         if (mergedFile.exists()) {
             //noinspection ResultOfMethodCallIgnored
@@ -611,6 +602,25 @@ public class MediaUtil {
                 file.delete();
             }
         }
+    }
+
+    // 通过一组列表
+    public static String getConcatFilePathname(List<String> videoPathList) {
+        if (videoPathList == null || videoPathList.isEmpty()) {
+            return null;
+        }
+        String firstVideoPath = videoPathList.get(0);
+        int indexSuffix = firstVideoPath.lastIndexOf(".");
+        if (indexSuffix == -1) {
+            log.error("无效的视频格式，路径为：{}", firstVideoPath);
+            return null;
+        }
+
+        String fileName = firstVideoPath.substring(0, indexSuffix);
+        String suffix = firstVideoPath.substring(indexSuffix);
+
+        String mergedFilePath = fileName + "_ALL_IN_ONE" + suffix;
+        return mergedFilePath;
     }
 
     /**
