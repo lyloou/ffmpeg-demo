@@ -515,22 +515,69 @@ public class MediaUtil {
         if (endTime.getTime() - startTime.getTime() > info.getDuration()) {
             throw new RuntimeException("截取时间不合法：" + startTime.toString() + "，因为截取时间大于视频的时长");
         }
-        try {
-            System.out.println(outputFile.getAbsoluteFile());
-            if (outputFile.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                outputFile.delete();
+        if (outputFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            outputFile.delete();
+        }
+
+        if (useConvert(videoFile)) {
+            System.out.println("cutWithConvert......");
+            cutWithConvert(videoFile, outputFile, startTime, endTime);
+        } else {
+            System.out.println("cutWithDefault......");
+            cutWithDefault(videoFile, outputFile, startTime, endTime);
+        }
+    }
+
+    private static boolean useConvert(File videoFile) {
+        List<String> suffixList = Arrays.asList(
+                // ".mpg",
+                // ".ts",
+//                ".mp4"
+        );
+        for (String suffix : suffixList) {
+            if (videoFile.getName().endsWith(suffix)) {
+                return true;
             }
+        }
+        return false;
+    }
+
+    private static void cutWithConvert(File videoFile, File outputFile, Time startTime, Time endTime) {
+        List<String> commond = new ArrayList<String>();
+        commond.add("-y");
+        commond.add("-ss");
+        commond.add(startTime.toString());
+        commond.add("-to");
+        commond.add(endTime.toString());
+        commond.add("-i");
+        commond.add(videoFile.getAbsolutePath());
+        commond.add("-c:v");
+        commond.add("libx264");
+        commond.add("-c:a");
+        commond.add("aac");
+        commond.add("-strict");
+        commond.add("experimental");
+        commond.add("-b:a");
+        commond.add("98k");
+        commond.add(outputFile.getAbsolutePath());
+        executeCommand(commond);
+    }
+
+    private static void cutWithDefault(File videoFile, File outputFile, Time startTime, Time endTime) {
+        try {
+
             List<String> commond = new ArrayList<String>();
-            commond.add("-y");
             commond.add("-i");
             commond.add(videoFile.getAbsolutePath());
             commond.add("-ss");
             commond.add(startTime.toString());
             commond.add("-to");
             commond.add(endTime.toString());
-            commond.add("-c");
-            commond.add("copy");
+
+//            commond.add("-c"); // 不要使用这个，虽然快，却会让
+//            commond.add("copy");
+
             commond.add(outputFile.getAbsolutePath());
             executeCommand(commond);
         } catch (Exception e) {
@@ -619,7 +666,7 @@ public class MediaUtil {
         String fileName = firstVideoPath.substring(0, indexSuffix);
         String suffix = firstVideoPath.substring(indexSuffix);
 
-        String mergedFilePath = fileName + "_ALL_IN_ONE" + suffix;
+        String mergedFilePath = fileName + "_ALL_IN_ONE_" + videoPathList.size() + suffix;
         return mergedFilePath;
     }
 

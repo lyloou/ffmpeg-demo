@@ -87,4 +87,13 @@ public class CutInfo implements Comparable<CutInfo> {
         }
         return getOutputFileName().compareTo(o.getOutputFileName());
     }
+
+    @Override
+    public String toString() {
+        return "CutInfo{" +
+                "inputPathname='" + inputPathname + '\'' +
+                ", startTime='" + startTime + '\'' +
+                ", endTime='" + endTime + '\'' +
+                '}';
+    }
 }
